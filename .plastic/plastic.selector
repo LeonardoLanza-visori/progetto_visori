@@ -1,0 +1,4 @@
+repository "Bombing Palestina/Visore@1375497272115@cloud"
+  path "/"
+    br "/main"
+    co "/main"
