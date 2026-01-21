@@ -1,7 +1,7 @@
 using UnityEngine;
 
 public class FlyCamera : MonoBehaviour {
-    public float speed = 30f; // Velocità normale
+    public float speed = 50f; // Velocità normale
     public float sprintMultiplier = 3f; // Velocità quando premi Shift
     public float sensitivity = 2f;
 

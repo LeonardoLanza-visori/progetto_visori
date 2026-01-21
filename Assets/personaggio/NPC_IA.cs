@@ -2,43 +2,55 @@ using UnityEngine;
 using UnityEngine.AI;
 
 public class NPC_IA : MonoBehaviour {
-    [Header("Parametri IA")]
-    public float raggioMovimento = 15f; // Raggio entro cui cercare la meta
+    [Header("Parametri Percorso")]
+    public float raggioMinimo = 40f;   // Distanza minima (alza per fare più strada)
+    public float raggioMassimo = 150f; // Distanza massima (copre l'arena)
+    public float attesaMeta = 0.5f;
+    
     private NavMeshAgent agent;
     private Animator anim;
+    private float timer;
 
     void Start() {
         agent = GetComponent<NavMeshAgent>();
         anim = GetComponent<Animator>();
-        
-        // Configurazione automatica dell'agente
-        agent.acceleration = 10f; 
-        agent.angularSpeed = 360f; 
-        
+        // Non scriviamo agent.speed qui, così non si resetta!
         IniziaNuovoPercorso();
     }
 
     void Update() {
-        // Sincronizza l'animazione con la velocità reale dell'agente
         if (anim != null) {
-            anim.SetFloat("Speed", agent.velocity.magnitude);
+            // Controlla se l'agente si sta muovendo fisicamente
+            float movimentoReale = agent.velocity.magnitude > 0.1f ? 1.0f : 0f;
+            // Invia il valore al parametro 'Speed' che hai creato nell'Animator
+            anim.SetFloat("Speed", movimentoReale);
         }
 
-        // Se l'NPC è quasi arrivato o è bloccato, cambia meta
-        if (!agent.pathPending && agent.remainingDistance < 0.5f) {
-            IniziaNuovoPercorso();
+        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance) {
+            timer += Time.deltaTime;
+            if (timer >= attesaMeta) {
+                IniziaNuovoPercorso();
+                timer = 0;
+            }
         }
     }
 
-    void IniziaNuovoPercorso() {
-        // Cerca un punto casuale
-        Vector3 puntoCasuale = transform.position + Random.insideUnitSphere * raggioMovimento;
-        NavMeshHit hit;
-        
-        // Verifica che il punto sia effettivamente sulla zona azzurra (NavMesh)
-        // Se non trova un punto entro 5 metri dal punto casuale, riprova
-        if (NavMesh.SamplePosition(puntoCasuale, out hit, 5.0f, NavMesh.AllAreas)) {
-            agent.SetDestination(hit.position);
+    public void IniziaNuovoPercorso() {
+        bool trovato = false;
+        int tentativi = 0;
+
+        while (!trovato && tentativi < 20) {
+            Vector3 direzioneCasuale = (Random.insideUnitSphere * raggioMassimo) + transform.position;
+            NavMeshHit hit;
+
+            if (NavMesh.SamplePosition(direzioneCasuale, out hit, 40f, NavMesh.AllAreas)) {
+                // Accetta solo mete lontane per far fare tanta strada
+                if (Vector3.Distance(transform.position, hit.position) >= raggioMinimo) {
+                    agent.SetDestination(hit.position);
+                    trovato = true;
+                }
+            }
+            tentativi++;
         }
     }
 }
