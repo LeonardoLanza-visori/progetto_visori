@@ -1,12 +1,12 @@
 using UnityEngine;
 using UnityEngine.XR;
-using UnityEngine.XR.Interaction.Toolkit;
 
 [RequireComponent(typeof(CharacterController))]
 public class VRMovement : MonoBehaviour
 {
-    public float speed = 3.0f;
-    public XRNode inputSource = XRNode.LeftHand; // Usa la mano sinistra per il movimento
+    [Header("Configurazione Movimento")]
+    public float speed = 3.5f;
+    public XRNode inputSource = XRNode.LeftHand; // Analogico Sinistro
     public float gravity = -9.81f;
 
     private CharacterController character;
@@ -17,31 +17,43 @@ public class VRMovement : MonoBehaviour
     void Start()
     {
         character = GetComponent<CharacterController>();
-        // Troviamo la telecamera per capire in che direzione muoverci
-        cameraTransform = Camera.main.transform;
+        
+        // Cerchiamo la Main Camera per orientare il movimento secondo lo sguardo
+        if (Camera.main != null)
+        {
+            cameraTransform = Camera.main.transform;
+        }
     }
 
     void Update()
     {
-        // Recuperiamo l'input dall'analogico dell'Oculus
+        // Recuperiamo l'input dell'analogico dai controller Oculus
         InputDevice device = InputDevices.GetDeviceAtXRNode(inputSource);
         device.TryGetFeatureValue(CommonUsages.primary2DAxis, out inputAxis);
     }
 
     private void FixedUpdate()
     {
-        // Calcoliamo la direzione basandoci su dove guarda il visore
+        // Calcoliamo la rotazione orizzontale del visore
         Quaternion headYaw = Quaternion.Euler(0, cameraTransform.eulerAngles.y, 0);
+        
+        // Calcoliamo la direzione del movimento basata sull'input e sulla rotazione della testa
         Vector3 direction = headYaw * new Vector3(inputAxis.x, 0, inputAxis.y);
 
-        // Applichiamo movimento e gravità
+        // Applichiamo il movimento orizzontale
         character.Move(direction * speed * Time.fixedDeltaTime);
 
+        // Gestione della gravità
         if (character.isGrounded)
+        {
             fallingVelocity = 0;
+        }
         else
+        {
             fallingVelocity += gravity * Time.fixedDeltaTime;
+        }
 
+        // Applichiamo la gravità (Movimento verticale)
         character.Move(Vector3.up * fallingVelocity * Time.fixedDeltaTime);
     }
 }
