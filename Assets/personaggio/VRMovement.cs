@@ -23,6 +23,8 @@ public class VRMovement : MonoBehaviour
         {
             cameraTransform = Camera.main.transform;
         }
+        // Impedisce al controller di ignorare l'altezza impostata manualmente
+        character.stepOffset = 0.1f;
     }
 
     void Update()
@@ -30,6 +32,16 @@ public class VRMovement : MonoBehaviour
         // Recuperiamo l'input dell'analogico dai controller Oculus
         InputDevice device = InputDevices.GetDeviceAtXRNode(inputSource);
         device.TryGetFeatureValue(CommonUsages.primary2DAxis, out inputAxis);
+         void CapsuleFollowHeadset()
+{
+    // Adatta l'altezza della capsula all'altezza della camera
+    character.height = cameraTransform.localPosition.y;
+    
+    // Sposta il centro della capsula a metà dell'altezza per far toccare i piedi a terra
+    Vector3 capsuleCenter = cameraTransform.localPosition;
+    capsuleCenter.y = character.height / 2;
+    character.center = capsuleCenter;
+    }
     }
 
     private void FixedUpdate()
